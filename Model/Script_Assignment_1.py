@@ -119,9 +119,9 @@ mnist_data = pd.read_csv(parent_dir + '\data\mnist.csv').values
 labels = mnist_data[:, 0]
 digits = mnist_data[:, 1:]
 img_size = 28
-plt.figure()
+"""plt.figure()
 plt.imshow(digits[0].reshape(img_size, img_size))
-plt.show()
+#plt.show()"""
 
 
 #%%
@@ -134,13 +134,13 @@ labels_df = pd.DataFrame({'labels':labels})
 labels_df = labels_df.groupby(['labels']).size().reset_index(name = 'count')
 labels_df['percentage'] = labels_df['count']/42000
 
-plt.figure()
+"""plt.figure()
 plt.bar(np.arange(0,10), labels_df['count'])
 plt.xticks(np.arange(0,10))
 plt.xlabel('Class')
 plt.ylabel('Count')
 plt.title('Class Distribution')
-#plt.show()
+#plt.show()"""
 
 
 #%%
@@ -207,19 +207,86 @@ print(confusion_matrix_two_classes)
 "-- Think of a new feature and do the same analysis as done above"
 
 
-tempSum = 0
-counter = 0
-histArray = np.array()
-for image in digits:
-    tempArray = np.array()
-    for x in range(784):
-        if(x % 28 == 0 and x != 0):
-            tempArray.append(tempSum)
-            tempSum = 0
-            counter += 1
-        tempSum += image[x]
-    
 
+
+rowHistArray = []
+columnHistArray = []
+imageCounter = 0
+
+# Make a row and column histogram for each image
+for image in digits:
+    # counter initializations
+    counter = 0
+    tempSum = 0
+    colCounter = 0
+
+    # Array initializations to 0
+    tempArray = np.zeros((28,1))
+    tempColArray = np.zeros((28,1))
+    rowHistArray.append(tempArray)
+    columnHistArray.append(tempColArray)
+    continue
+    # Histogram generation
+    for x in range(784):
+        # Row histogram generation
+        if(x % 28 == 0 and x != 0):
+            counter += 1
+        tempArray[counter] += image[x]
+
+        # Column histogram generation
+        tempColArray[colCounter] += image[x]
+        colCounter += 1
+        if(colCounter >= 28):
+            colCounter = 0
+
+    rowHistArray.append(tempArray)
+    columnHistArray.append(tempColArray)
+    if(counter % 100 == 0):
+        print("Done image ", imageCounter)
+    imageCounter += 1
+    
+########################################### CONSTRUCT DATAFRAME FOR ANALYSIS ######################
+
+df2 = pd.DataFrame({'labels': labels, 'Row_histogram': rowHistArray})
+
+################################# COMPUTE MEAN AND STD OF INK QUANTITY FOR EACH CLASS ######################
+
+df_mean_std = df2.groupby('labels').agg({'Row_histogram': ['mean', 'std']})
+df_mean_std = df_mean_std.reset_index('labels')
+df_mean_std.columns = ['labels', 'mean', 'std']
+
+########################################### SCALE INK QUANTITY FEATURE ###############################
+
+df2['Row_histogram_scaled'] = scale(df2['Row_histogram']).reshape(-1, 1)
+mean_of_scaled_Row_histogram = df2['Row_histogram_scaled'].mean()
+std_of_scaled_Row_histogram = df2['Row_histogram_scaled'].std()
+
+print('mean of scaled ink quantity is', np.round(mean_of_scaled_Row_histogram,2), 'this should be 0' )
+print('std of scaled ink quantity is', np.round(std_of_scaled_Row_histogram,2), 'this should be 1' )
+
+########################################### CONSTRUCT TEST AND TRAINING SET ######################
+
+X_train, X_test, y_train, y_test = train_test_split(df[['Row_histogram_scaled']], df['labels'], test_size=0.2, random_state=42)
+
+
+########################################### FIT MULTINOMIAL LOGISTIC REGRESSION MODEL ######################
+
+#define the model
+lr = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+
+#fit the model
+lr.fit(X_train, y_train)
+
+#make predictions
+y_pred = lr.predict(X_test)
+
+#construct confusion matrix
+calculated_confusion_matrix = confusion_matrix(y_test, y_pred)
+
+#construct transition matrix for two classes. From this we can see how well the model is able to
+#distuingish these two classes
+confusion_matrix_two_classes = conf_matrix_two_classes(0,5)
+print(confusion_matrix_two_classes)
 
 
 

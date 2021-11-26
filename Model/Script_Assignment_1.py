@@ -7,6 +7,7 @@ Created on Wed Nov 24 15:03:13 2021
 
 ########################################## LOADING PACKAGES ###############################################
 
+from numpy.lib.index_tricks import diag_indices
 import pandas as pd
 from pathlib import Path
 import os
@@ -204,8 +205,20 @@ print(confusion_matrix_two_classes)
 #%%
 "QUESTION 3"
 "-- Think of a new feature and do the same analysis as done above"
+
+
 tempSum = 0
-#for x in range(785):
+counter = 0
+histArray = np.array()
+for image in digits:
+    tempArray = np.array()
+    for x in range(784):
+        if(x % 28 == 0 and x != 0):
+            tempArray.append(tempSum)
+            tempSum = 0
+            counter += 1
+        tempSum += image[x]
+    
 
 
 

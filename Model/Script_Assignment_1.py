@@ -35,10 +35,10 @@ def conf_matrix_two_classes(class1, class2):
     
     confusion_matrix_two_classes = np.zeros((2,2))
     
-    confusion_matrix_two_classes[0,0] = confusion_matrix[class1,class1]
-    confusion_matrix_two_classes[0,1] = confusion_matrix[class1,class2]
-    confusion_matrix_two_classes[1,0] = confusion_matrix[class2,class1]
-    confusion_matrix_two_classes[1,1] = confusion_matrix[class2,class2]
+    confusion_matrix_two_classes[0,0] = calculated_confusion_matrix[class1,class1]
+    confusion_matrix_two_classes[0,1] = calculated_confusion_matrix[class1,class2]
+    confusion_matrix_two_classes[1,0] = calculated_confusion_matrix[class2,class1]
+    confusion_matrix_two_classes[1,1] = calculated_confusion_matrix[class2,class2]
     
     return confusion_matrix_two_classes
     
@@ -139,6 +139,7 @@ plt.xticks(np.arange(0,10))
 plt.xlabel('Class')
 plt.ylabel('Count')
 plt.title('Class Distribution')
+#plt.show()
 
 
 #%%
@@ -192,7 +193,7 @@ lr.fit(X_train, y_train)
 y_pred = lr.predict(X_test)
 
 #construct confusion matrix
-confusion_matrix = confusion_matrix(y_test, y_pred)
+calculated_confusion_matrix = confusion_matrix(y_test, y_pred)
 
 #construct transition matrix for two classes. From this we can see how well the model is able to
 #distuingish these two classes
@@ -203,6 +204,10 @@ print(confusion_matrix_two_classes)
 #%%
 "QUESTION 3"
 "-- Think of a new feature and do the same analysis as done above"
+tempSum = 0
+#for x in range(785):
+
+
 
 
 #%%

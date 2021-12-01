@@ -42,14 +42,16 @@ waitAfterShow = True
 
 def conf_matrix_two_classes(class1, class2, calculated_confusion_matrix):
     
-    confusion_matrix_two_classes3 = np.zeros((2,2))
+
+    confusion_matrix_two_classes2 = np.zeros((2,2))
     
-    confusion_matrix_two_classes3[0,0] = calculated_confusion_matrix[class1,class1]
-    confusion_matrix_two_classes3[0,1] = calculated_confusion_matrix[class1,class2]
-    confusion_matrix_two_classes3[1,0] = calculated_confusion_matrix[class2,class1]
-    confusion_matrix_two_classes3[1,1] = calculated_confusion_matrix[class2,class2]
+    confusion_matrix_two_classes2[0,0] = calculated_confusion_matrix[class1,class1]
+    confusion_matrix_two_classes2[0,1] = calculated_confusion_matrix[class1,class2]
+    confusion_matrix_two_classes2[1,0] = calculated_confusion_matrix[class2,class1]
+    confusion_matrix_two_classes2[1,1] = calculated_confusion_matrix[class2,class2]
     
-    return confusion_matrix_two_classes3
+    return confusion_matrix_two_classes2
+
     
 
 def print_heatMap(confusionMatrix, classFrom, classTo):
@@ -160,6 +162,44 @@ def SVM(params, X_train, X_test, y_train, y_test):
     
     return accuracy
 
+
+def MLP(params, X_train, X_test, y_train, y_test):
+    
+    #find best value for lambda using cross validation. For this we use the grid_search method from sklearn
+    mlp_params = params
+    model = MLPClassifier(max_iter = 1000)
+    grid_search = get_best(model, mlp_params, X_train, y_train)
+    best_hidden_layers = grid_search.best_params_['hidden_layer_sizes']
+    best_activation = grid_search.best_params_['activation']
+    best_solver = grid_search.best_params_['solver']
+    
+    #fit final model, using the best value for C found using cross-validation
+    mlp_model = MLPClassifier(max_iter = 1000, hidden_layer_sizes=best_hidden_layers, 
+                              activation=best_activation, 
+                              solver=best_solver, random_state = 1)
+    mlp_model.fit(X_train, y_train)
+    mlp_pred = mlp_model.predict(X_test)
+    
+    #compute performances
+    accuracy = accuracy_score(y_test, mlp_pred)
+    precision = precision_score(y_test, mlp_pred, average='micro')
+    recall = recall_score(y_test, mlp_pred, average='micro')
+
+    best_model_info = {'hidden_layers_sizes':best_hidden_layers, 
+                       'best_activation':best_activation,
+                       'best_solver':best_solver}
+
+    print('MLP Classifier')
+    print('-- best solver:', best_solver)
+    print('-- best activation', best_activation)
+    print('-- best hidden layer sizes:', best_hidden_layers)
+    print('--Accuracy:', accuracy)
+    print('--Precision:', precision)
+    print('--Recall:', recall)
+    print('')
+    
+    
+    return accuracy
 #%%
 "INTRODUCTION QUESTIONS"
 
@@ -469,7 +509,19 @@ svm_param = {'kernel':['linear', 'poly', 'rbf'], 'C':[0.1,0.5,1,5,10,50,100]}
 #fit models for all parameters and pick best parameter values and use these to fit final model.
 svm_accuracy = SVM(svm_param,X_train_pix, X_test_pix, y_train_pix, y_test_pix)
 
-#################################### FIT SUPPORT VECTOR MACHINE ######################
+#################################### Neural network ######################
+
+#dictionary with the different parameters we want to consider and the value range. 
+#Another parameter we could include is the gamma parameter. 
+mlp_param = {'hidden_layer_sizes':[(50), (50,100), (50,100,150)],
+              'activation': ['identity', 'logistic', 'tanh', 'relu'],
+              'solver': ['lbfgs', 'sgd', 'adam']}
+
+#fit models for all parameters and pick best parameter values and use these to fit final model.
+mlp_accuracy = MLP(mlp_param,X_train_pix, X_test_pix, y_train_pix, y_test_pix)
+
+
+
 
 #%%
 

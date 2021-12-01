@@ -33,9 +33,9 @@ from sklearn.neural_network import MLPClassifier
 
 skipHistogram = False
 smallList = False
-waitAfterShow = False
+waitAfterShow = True
 
-
+## TODO: Maybe we can look at an heatmap of all the combined numbers and filter the input data
 
 #%%
 ########################################## FUNCTIONS ###############################################
@@ -92,7 +92,7 @@ def logistic_regression(xVar, yVar):
     #construct transition matrix for two classes. From this we can see how well the model is able to
     #distuingish these two classes
     confusion_matrix_two_classes = conf_matrix_two_classes(0,5, calculated_confusion_matrix)
-    print(calculated_confusion_matrix)
+    print(confusion_matrix_two_classes)
 
     print_heatMap(calculated_confusion_matrix, 1, 9)
 
@@ -196,7 +196,7 @@ labels_df = pd.DataFrame({'labels':labels})
 labels_df = labels_df.groupby(['labels']).size().reset_index(name = 'count')
 labels_df['percentage'] = labels_df['count']/42000
 plt.figure()
-plt.bar(np.arange(0,10), labels_df['count'])
+plt.bar(np.arange(0,10), labels_df['count'] )
 plt.xticks(np.arange(0,10))
 plt.xlabel('Class')
 plt.ylabel('Count')
@@ -230,6 +230,25 @@ df_mean_std = df.groupby('labels').agg({'Ink_Quantity': ['mean', 'std']})
 df_mean_std = df_mean_std.reset_index('labels')
 df_mean_std.columns = ['labels', 'mean', 'std']
 
+plt.figure()
+plt.bar(np.arange(0,10), df_mean_std['mean'])
+plt.errorbar(np.arange(0,10), df_mean_std['mean'], yerr=df_mean_std['std'], fmt='none', ecolor='black', barsabove=True)
+plt.xticks(np.arange(0,10))
+plt.xlabel('Class')
+plt.ylabel('Mean')
+plt.title('Class Ink Quantity Mean with Standard Deviation')
+if(waitAfterShow):
+    plt.show()
+
+plt.figure()
+plt.bar(np.arange(0,10), df_mean_std['std'])
+plt.xticks(np.arange(0,10))
+plt.xlabel('Class')
+plt.ylabel('Standard Deviation')
+plt.title('Class Ink Quantity Standard Deviation')
+if(waitAfterShow):
+    plt.show()
+
 ########################################### SCALE INK QUANTITY FEATURE ###############################
 
 df['Ink_Quantity_scaled'] = scale(df['Ink_Quantity']).reshape(-1, 1)
@@ -254,7 +273,7 @@ columnHistArray = []
 imageCounter = 0
 
 
-
+# every 28th array[::28]
 # Make a row and column histogram for each image
 for image in digits:
     # counter initializations
@@ -313,7 +332,7 @@ for x in range(len(rowHistArray)):
 # Doing this seperate for readability of the output
 dfRow = pd.DataFrame({'labels': labels})
 dfCol = pd.DataFrame({'labels': labels})
-dfCombined = pd.DataFrame({'labels': labels})
+dfCombined = df
 
 for x in range(28):
     ########################################### CONSTRUCT DATAFRAME FOR ANALYSIS ######################
@@ -372,10 +391,7 @@ for x in range(28):
 
 
 
-#%%
-"QUESTION 4"
-"-- Fit a multinomial logistic regression model on both features and see if it out performs the model"
-"   that used only the ink feature"
+
 
 feature_cols_row = ['Row_0_histogram_scaled','Row_1_histogram_scaled','Row_2_histogram_scaled','Row_3_histogram_scaled',
     'Row_4_histogram_scaled','Row_5_histogram_scaled','Row_6_histogram_scaled','Row_7_histogram_scaled',
@@ -394,19 +410,32 @@ feature_cols_col = ['Col_0_histogram_scaled','Col_1_histogram_scaled','Col_2_his
     'Col_20_histogram_scaled','Col_21_histogram_scaled','Col_22_histogram_scaled','Col_23_histogram_scaled',
     'Col_24_histogram_scaled','Col_25_histogram_scaled','Col_26_histogram_scaled','Col_27_histogram_scaled']
 
+feature_cols_ink = ['Ink_Quantity_scaled']
+
 
 xVarRow = dfRow[feature_cols_row]
 xVarCol = dfCol[feature_cols_col]
-xVarCombined = dfCombined[feature_cols_row + feature_cols_col] 
+xVarRowAndCol = dfCombined[feature_cols_row + feature_cols_col] 
 yVarRow = dfRow['labels'] 
 yVarCol = dfCol['labels'] 
-yVarCombined = dfCombined['labels'] 
+yVarRowAndCol = dfCombined['labels'] 
+
 
 logistic_regression(xVarRow, yVarRow)
-logistic_regression(xVarCol, yVarCol)
-logistic_regression(xVarCombined, yVarCol)
+#logistic_regression(xVarCol, yVarCol)
+#logistic_regression(xVarRowAndCol, yVarRowAndCol)
 
-plt.show()
+
+#%%
+"QUESTION 4"
+"-- Fit a multinomial logistic regression model on both features and see if it out performs the model"
+"   that used only the ink feature"
+
+xVarRowAndInk = dfCombined[feature_cols_row + feature_cols_ink]
+yVarRowAndInk = dfCombined['labels'] 
+logistic_regression(xVarRowAndInk, yVarRowAndInk)
+
+
 
 #%%
 "QUESTION 5"

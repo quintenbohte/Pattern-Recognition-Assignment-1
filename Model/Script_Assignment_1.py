@@ -42,14 +42,14 @@ waitAfterShow = True
 
 def conf_matrix_two_classes(class1, class2, calculated_confusion_matrix):
     
-    confusion_matrix_two_classes = np.zeros((2,2))
+    confusion_matrix_two_classes3 = np.zeros((2,2))
     
-    confusion_matrix_two_classes[0,0] = calculated_confusion_matrix[class1,class1]
-    confusion_matrix_two_classes[0,1] = calculated_confusion_matrix[class1,class2]
-    confusion_matrix_two_classes[1,0] = calculated_confusion_matrix[class2,class1]
-    confusion_matrix_two_classes[1,1] = calculated_confusion_matrix[class2,class2]
+    confusion_matrix_two_classes3[0,0] = calculated_confusion_matrix[class1,class1]
+    confusion_matrix_two_classes3[0,1] = calculated_confusion_matrix[class1,class2]
+    confusion_matrix_two_classes3[1,0] = calculated_confusion_matrix[class2,class1]
+    confusion_matrix_two_classes3[1,1] = calculated_confusion_matrix[class2,class2]
     
-    return confusion_matrix_two_classes
+    return confusion_matrix_two_classes3
     
 
 def print_heatMap(confusionMatrix, classFrom, classTo):

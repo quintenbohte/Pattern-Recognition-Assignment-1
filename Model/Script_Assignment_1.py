@@ -29,11 +29,11 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn import svm
 from sklearn.neural_network import MLPClassifier
-
-
+import pickle
 skipHistogram = False
 smallList = False
 waitAfterShow = True
+
 
 ## TODO: Maybe we can look at an heatmap of all the combined numbers and filter the input data
 
@@ -71,7 +71,23 @@ def print_heatMap(confusionMatrix, classFrom, classTo):
         plt.show()
     #Text(0.5,257.44,'Predicted label')
 
-def logistic_regression(xVar, yVar):
+def SaveDict(dictionary, model, savename = None):
+    parent_dir = str(Path(os.path.abspath(__file__)).parents[1])
+    
+    with open(parent_dir + '\Data\Output\Results_' + str(model) + str(savename) + '.dictionary', 'wb') as config_dictionary_file:
+        
+         pickle.dump(dictionary, config_dictionary_file)
+
+def load_dict(path_to_dict):
+    import pickle
+    with open(path_to_dict, 'rb') as config_dictionary_file:
+     
+        # Step 3
+        dictionary = pickle.load(config_dictionary_file)
+     
+        return dictionary
+    
+def logistic_regression(xVar, yVar, savename):
     ########################################### CONSTRUCT TEST AND TRAINING SET ######################
     # This splits every entry in here in 2 a training and a test set
     X_train, X_test, y_train, y_test = train_test_split(xVar, yVar, test_size=0.2, random_state=42)
@@ -94,18 +110,37 @@ def logistic_regression(xVar, yVar):
     #construct transition matrix for two classes. From this we can see how well the model is able to
     #distuingish these two classes
     confusion_matrix_two_classes = conf_matrix_two_classes(0,5, calculated_confusion_matrix)
-    print(confusion_matrix_two_classes)
+
+    #compute metrics
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, average='micro')
+    recall = recall_score(y_test, y_pred, average='micro')
+    f1 = f1_score(y_test, y_pred, average = 'micro')
 
     print_heatMap(calculated_confusion_matrix, 1, 9)
 
-            
+    best_model_info = {'accuracy': accuracy,
+                       'precision': precision,
+                       'recall': recall, 
+                       'F1-score': f1,
+                       'confusion_matrix':calculated_confusion_matrix}
+    
+    SaveDict(best_model_info, 'Logistic_regression', savename = savename)
+
 
 def get_best(model, param, X_train, y_train):
     GridS = GridSearchCV(model, param, cv=5, n_jobs=-1, scoring='accuracy')
     GridS.fit(X_train, y_train)
     return GridS
 
-def logistic_regression_LASSO(params, X_train, X_test, y_train, y_test):
+
+def logistic_regression_LASSO(params, X_train, X_test, y_train, y_test, scaled = False):
+    
+    if scaled == False:
+        scaled = ''
+    if scaled == True:
+        scaled = '_scaled'
+    
     
     #find best value for lambda using cross validation. For this we use the grid_search method from sklearn
     lr_param = params
@@ -122,7 +157,18 @@ def logistic_regression_LASSO(params, X_train, X_test, y_train, y_test):
     accuracy = accuracy_score(y_test, lr_pred)
     precision = precision_score(y_test, lr_pred, average='micro')
     recall = recall_score(y_test, lr_pred, average='micro')
-
+    f1 = f1_score(y_test, lr_pred, average = 'micro')
+    calculated_confusion_matrix = confusion_matrix(y_test, lr_pred)
+    
+    #Make dictionary with all data
+    best_model_info = {'best C': best_C,
+                       'accuracy': accuracy,
+                       'precision': precision,
+                       'recall': recall, 
+                       'F1-score': f1, 
+                       'Confusion matrix':calculated_confusion_matrix}
+    
+    SaveDict(best_model_info, 'Logistic_regression_LASSO')
     
     print('LOGISTIC REGRESSION LASSO')
     print('--Accuracy:', accuracy)
@@ -132,7 +178,12 @@ def logistic_regression_LASSO(params, X_train, X_test, y_train, y_test):
     
     return accuracy
 
-def SVM(params, X_train, X_test, y_train, y_test):
+def SVM(params, X_train, X_test, y_train, y_test, scaled = False):
+    
+    if scaled == False:
+        scaled = ''
+    if scaled == True:
+        scaled = '_scaled'
     
     #find best value for lambda using cross validation. For this we use the grid_search method from sklearn
     svm_param = params
@@ -140,9 +191,10 @@ def SVM(params, X_train, X_test, y_train, y_test):
     grid_search = get_best(model, svm_param, X_train, y_train)
     best_C = grid_search.best_params_['C']
     best_kernel = grid_search.best_params_['kernel']
+    best_gamma = grid_search.best_params_['gamma']
     
     #fit final model, using the best value for C found using cross-validation
-    svm_model = svm.SVC(decision_function_shape='ovo', kernel = best_kernel, C = best_C)
+    svm_model = svm.SVC(decision_function_shape='ovo', kernel = best_kernel, C = best_C, gamma = best_gamma)
     svm_model.fit(X_train, y_train)
     svm_pred = svm_model.predict(X_test)
     
@@ -150,6 +202,20 @@ def SVM(params, X_train, X_test, y_train, y_test):
     accuracy = accuracy_score(y_test, svm_pred)
     precision = precision_score(y_test, svm_pred, average='micro')
     recall = recall_score(y_test, svm_pred, average='micro')
+    f1 = f1_score(y_test, svm_pred, average = 'micro')
+    calculated_confusion_matrix = confusion_matrix(y_test, svm_pred)
+
+    #Make dictionary with all data
+    best_model_info = {'best C':best_C, 
+                       'best Kernel':best_kernel,
+                       'best gamma': best_gamma,
+                       'accuracy':accuracy, 
+                       'precision': precision,
+                       'recall': recall, 
+                       'F1-score': f1, 
+                       'Confusion matrix':calculated_confusion_matrix}
+    
+    SaveDict(best_model_info, 'support_vector_machine')
 
     print('Support Vector Machine')
     print('-- best C:', best_C)
@@ -160,10 +226,15 @@ def SVM(params, X_train, X_test, y_train, y_test):
     print('')
     
     
-    return accuracy
+    return accuracy,
 
 
-def MLP(params, X_train, X_test, y_train, y_test):
+def MLP(params, X_train, X_test, y_train, y_test, scaled = False):
+    
+    if scaled == False:
+        scaled = ''
+    if scaled == True:
+        scaled = '_scaled'
     
     #find best value for lambda using cross validation. For this we use the grid_search method from sklearn
     mlp_params = params
@@ -174,7 +245,7 @@ def MLP(params, X_train, X_test, y_train, y_test):
     best_solver = grid_search.best_params_['solver']
     
     #fit final model, using the best value for C found using cross-validation
-    mlp_model = MLPClassifier(max_iter = 1000, hidden_layer_sizes=best_hidden_layers, 
+    mlp_model = MLPClassifier(max_iter = 5000, hidden_layer_sizes=best_hidden_layers, 
                               activation=best_activation, 
                               solver=best_solver, random_state = 1)
     mlp_model.fit(X_train, y_train)
@@ -184,10 +255,20 @@ def MLP(params, X_train, X_test, y_train, y_test):
     accuracy = accuracy_score(y_test, mlp_pred)
     precision = precision_score(y_test, mlp_pred, average='micro')
     recall = recall_score(y_test, mlp_pred, average='micro')
+    f1 = f1_score(y_test, mlp_pred, average = 'micro')
+    calculated_confusion_matrix = confusion_matrix(y_test, mlp_pred)
+
 
     best_model_info = {'hidden_layers_sizes':best_hidden_layers, 
                        'best_activation':best_activation,
-                       'best_solver':best_solver}
+                       'best_solver':best_solver, 
+                       'accuracy':accuracy, 
+                       'precision': precision,
+                       'recall': recall, 
+                       'F1-score': f1, 
+                       'Confusion matrix':calculated_confusion_matrix}
+    
+    SaveDict(best_model_info, ('Neural_Network' + scaled))
 
     print('MLP Classifier')
     print('-- best solver:', best_solver)
@@ -298,15 +379,12 @@ std_of_scaled_ink_quantity = df['Ink_Quantity_scaled'].std()
 print('mean of scaled ink quantity is', np.round(mean_of_scaled_ink_quantity,2), 'this should be 0' )
 print('std of scaled ink quantity is', np.round(std_of_scaled_ink_quantity,2), 'this should be 1' )
 
-logistic_regression(df[['Ink_Quantity_scaled']], df['labels'])
+logistic_regression(df[['Ink_Quantity_scaled']], df['labels'], savename = '_ink_feature')
 
 
 #%%
 "QUESTION 3"
 "-- Think of a new feature and do the same analysis as done above"
-
-
-
 
 rowHistArray = []
 columnHistArray = []
@@ -461,7 +539,7 @@ yVarCol = dfCol['labels']
 yVarRowAndCol = dfCombined['labels'] 
 
 
-logistic_regression(xVarRow, yVarRow)
+logistic_regression(xVarRow, yVarRow, savename = '_row_feature')
 #logistic_regression(xVarCol, yVarCol)
 #logistic_regression(xVarRowAndCol, yVarRowAndCol)
 
@@ -473,7 +551,7 @@ logistic_regression(xVarRow, yVarRow)
 
 xVarRowAndInk = dfCombined[feature_cols_row + feature_cols_ink]
 yVarRowAndInk = dfCombined['labels'] 
-logistic_regression(xVarRowAndInk, yVarRowAndInk)
+logistic_regression(xVarRowAndInk, yVarRowAndInk, savename = '_both_featutes')
 
 
 
@@ -490,7 +568,7 @@ logistic_regression(xVarRowAndInk, yVarRowAndInk)
 #################################### CONSTRUCT DATAFRAME WITH EACH PIXEL AS FEATURE ######################
 #construct train and test set
 X_train_pix, X_test_pix, y_train_pix, y_test_pix = train_test_split(digits, labels, test_size=0.88, random_state=42)
-
+#%%
 
 #################################### FIT LOGISTIC REGRESSION LASSO ######################
 #dictionary with the different parameters we want to consider and the value range. 
@@ -500,26 +578,30 @@ lr_param = {'C': [0.1, 0.5, 1, 5, 10, 50, 100]}
 lr_accuracy = logistic_regression_LASSO(lr_param, X_train_pix, X_test_pix, y_train_pix, y_test_pix)
 
 
+#%%
 #################################### FIT SUPPORT VECTOR MACHINE ######################
 
 #dictionary with the different parameters we want to consider and the value range. 
 #Another parameter we could include is the gamma parameter. 
-svm_param = {'kernel':['linear', 'poly', 'rbf'], 'C':[0.1,0.5,1,5,10,50,100]}
+svm_param = {'kernel':['linear', 'poly', 'rbf'],
+             'C':[0.1,0.5,1,5,10,50,100],
+             'gamma': [0.001,0.01,0.1,1,10,100]}
 
 #fit models for all parameters and pick best parameter values and use these to fit final model.
 svm_accuracy = SVM(svm_param,X_train_pix, X_test_pix, y_train_pix, y_test_pix)
 
+#%%
 #################################### Neural network ######################
 
 #dictionary with the different parameters we want to consider and the value range. 
 #Another parameter we could include is the gamma parameter. 
-mlp_param = {'hidden_layer_sizes':[(50), (50,100), (50,100,150)],
+mlp_param = {'hidden_layer_sizes':[(100), (150), (150,100), (150,100,50)],
               'activation': ['identity', 'logistic', 'tanh', 'relu'],
-              'solver': ['lbfgs', 'sgd', 'adam']}
+              'solver': ['lbfgs', 'sgd', 'adam'], 
+              'learning_rate': ['constant', 'adaptive']}
 
 #fit models for all parameters and pick best parameter values and use these to fit final model.
 mlp_accuracy = MLP(mlp_param,X_train_pix, X_test_pix, y_train_pix, y_test_pix)
-
 
 
 
@@ -530,6 +612,15 @@ mlp_accuracy = MLP(mlp_param,X_train_pix, X_test_pix, y_train_pix, y_test_pix)
 "-- Do an statistical test to see whether there are significant differences between the model accuracies"
 
 #I would suggest a 
+
+#%%
+######################################## LOAD DICTIONARIES #####################
+
+info_lr_lasso = load_dict(parent_dir + '/Data/Output/Results_Logistic_regression_LASSONone.dictionary')
+info_mlp = load_dict(parent_dir + '/Data/Output/Results_Neural_NetworkNone.dictionary')
+info_svm  = load_dict(parent_dir + '/Data/Output/Results_support_vector_machineNone.dictionary')
+
+
 
 
 

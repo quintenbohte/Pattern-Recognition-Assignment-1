@@ -96,7 +96,7 @@ def logistic_regression(xVar, yVar, savename):
     ########################################### FIT MULTINOMIAL LOGISTIC REGRESSION MODEL ######################
 
     #define the model
-    lr = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+    lr = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=1000)
 
     #fit the model
     lr.fit(X_train, y_train)

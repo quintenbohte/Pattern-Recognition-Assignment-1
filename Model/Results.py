@@ -23,6 +23,14 @@ def load_dict(path_to_dict):
 
 parent_dir = str(Path(os.path.abspath(__file__)).parents[1])
 
-info_lr_lasso = load_dict(parent_dir + '/Data/Output/Results_Logistic_regression_LASSONone.dictionary')
-info_mlp = load_dict(parent_dir + '/Data/Output/Results_Neural_NetworkNone.dictionary')
-info_svm  = load_dict(parent_dir + '/Data/Output/Results_support_vector_machineNone.dictionary')
+results_lr_lasso = load_dict(parent_dir + '/Data/Output/Results_Logistic_regression_LASSONone.dictionary')
+results_mlp = load_dict(parent_dir + '/Data/Output/Results_Neural_NetworkNone.dictionary')
+results_svm  = load_dict(parent_dir + '/Data/Output/Results_support_vector_machineNone.dictionary')
+results_lr_ink_features = load_dict(parent_dir + '/Data/Output/Results_Logistic_regression_ink_feature.dictionary')
+results_lr_row_features = load_dict(parent_dir + '/Data/Output/Results_Logistic_regression_row_feature.dictionary')
+results_lr_both_features = load_dict(parent_dir + '/Data/Output/Results_Logistic_regression_both_featutes.dictionary')
+
+
+
+
+

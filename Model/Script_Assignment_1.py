@@ -97,20 +97,20 @@ def logistic_regression(xVar, yVar, savename):
 
     #define the model
     lr = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=1000)
-
+        
     #fit the model
     lr.fit(X_train, y_train)
-
+    
     #make predictions
     y_pred = lr.predict(X_test)
-
+    
     #construct confusion matrix
     calculated_confusion_matrix = confusion_matrix(y_test, y_pred)
-
+    
     #construct transition matrix for two classes. From this we can see how well the model is able to
     #distuingish these two classes
     confusion_matrix_two_classes = conf_matrix_two_classes(0,5, calculated_confusion_matrix)
-
+    
     #compute metrics
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred, average='micro')
@@ -619,6 +619,86 @@ mlp_accuracy = MLP(mlp_param,X_train_pix, X_test_pix, y_train_pix, y_test_pix)
 info_lr_lasso = load_dict(parent_dir + '/Data/Output/Results_Logistic_regression_LASSONone.dictionary')
 info_mlp = load_dict(parent_dir + '/Data/Output/Results_Neural_NetworkNone.dictionary')
 info_svm  = load_dict(parent_dir + '/Data/Output/Results_support_vector_machineNone.dictionary')
+
+
+############################### ONE WAY ANOVA ################################3
+
+def bootstrap(x, y):
+    x = pd.DataFrame(x)
+    y = pd.DataFrame(y)
+
+    n = len(x)
+
+    random_indices = np.random.randint(n, size=n)
+
+    bootstrap_sample_predictors = np.asarray(x.iloc[random_indices])
+    bootstrap_sample_targets = np.asarray(y.iloc[random_indices])
+
+    return bootstrap_sample_predictors, bootstrap_sample_targets[:,0]
+
+def lr(X_train, y_train, X_test, y_test):
+    
+    lr = LogisticRegression(multi_class='multinomial', solver='lbfgs', C = 0.1, max_iter = 10000)
+    lr.fit(X_train, y_train)
+    lr_pred = lr.predict(X_test)
+    accuracy = accuracy_score(y_test, lr_pred)
+
+    return accuracy
+
+def support_vector_machine(X_train, y_train, X_test, y_test):
+    
+    svm_model = svm.SVC(decision_function_shape='ovo', kernel = 'poly', C = 0.1, gamma = 0.001)
+    svm_model.fit(X_train, y_train)
+    svm_pred = svm_model.predict(X_test)
+    accuracy = accuracy_score(y_test, svm_pred)
+
+    return accuracy
+    
+def Multi_layer_perception_nn(X_train, y_train, X_test, y_test):
+    mlp_model = MLPClassifier(max_iter = 5000, hidden_layer_sizes=150, 
+                              activation='logistic', 
+                              solver='adam', random_state = 1)
+    mlp_model.fit(X_train, y_train)
+    mlp_pred = mlp_model.predict(X_test)
+    
+    accuracy = accuracy_score(y_test, mlp_pred)
+
+    return accuracy
+
+X_train_pix, X_test_pix, y_train_pix, y_test_pix = train_test_split(digits, labels, test_size=0.88, random_state=42)
+
+
+accuracy_samples_lr = []
+accuracy_samples_mlp = []
+accuracy_samples_svm = []
+
+
+n_samples = 450
+for sample in range(n_samples):
+    print(sample)
+    
+    x_train_b, y_train_b = bootstrap(X_train_pix, y_train_pix)
+    x_test = X_test_pix
+    y_test = y_test_pix
+
+
+    accuracy_lr = lr(x_train_b, y_train_b, x_test, y_test)
+    accuracy_samples_lr.append(accuracy_lr)
+    print('Lr')    
+    print(accuracy_lr)
+    accuracy_svm = support_vector_machine(x_train_b, y_train_b, x_test, y_test)
+    accuracy_samples_svm.append(accuracy_svm)
+    print('svm')
+    print(accuracy_svm)
+    accuracy_mlp = Multi_layer_perception_nn(x_train_b, y_train_b, x_test, y_test)
+    accuracy_samples_mlp.append(accuracy_mlp)
+    print('mlp')
+    print(accuracy_mlp)
+
+
+np.save(r'C:\Users\quint\Documents\Quinten_studie\Pattern_Recognition\Assigments\Assignment_1\Github\Pattern-Recognition-Assignment-1\Data\Output\sample_lr', np.asarray(accuracy_samples_lr))    
+np.save(r'C:\Users\quint\Documents\Quinten_studie\Pattern_Recognition\Assigments\Assignment_1\Github\Pattern-Recognition-Assignment-1\Data\Output\sample_svm', np.asarray(accuracy_samples_svm))    
+np.save(r'C:\Users\quint\Documents\Quinten_studie\Pattern_Recognition\Assigments\Assignment_1\Github\Pattern-Recognition-Assignment-1\Data\Output\sample_mlp', np.asarray(accuracy_samples_mlp))    
 
 
 
